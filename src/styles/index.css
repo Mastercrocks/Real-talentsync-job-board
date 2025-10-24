@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --bg: #0b1020;
+}
+
+html,body,#root{height:100%;}
+
+.shadow-card{box-shadow:0 10px 30px rgba(2,6,23,0.6)}

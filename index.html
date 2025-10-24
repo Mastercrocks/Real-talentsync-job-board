@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StockView Dashboard</title>
+  </head>
+  <body class="bg-gray-900 text-gray-100 dark">
+    <div id="root">
+      <!-- Fallback static content so the page isn't blank if React fails to load -->
+      <div id="fallback" class="min-h-screen flex items-center justify-center">
+        <div class="text-center text-gray-400">
+          <div class="text-2xl font-semibold">StockView</div>
+          <div class="mt-2">Loading dashboard…</div>
+          <div class="mt-4 text-sm">If this message remains, open DevTools → Console and paste the errors here.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Tailwind CDN for immediate styling in dev/demo (falls back to PostCSS-built styles in prod) -->
+    <script>
+      // provide a small runtime Tailwind config so the CDN build has our custom color
+      window.tailwind = window.tailwind || {}
+      window.tailwind.config = window.tailwind.config || {
+        theme: {
+          extend: {
+            colors: {
+              robinGreen: '#00C805'
+            }
+          }
+        },
+        darkMode: 'class'
+      }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script type="module" src="/src/main.jsx"></script>
+
+    <script>
+      // If React hasn't mounted within 2s, show a more obvious fallback and log helpful hints
+      setTimeout(()=>{
+        const root = document.getElementById('root')
+        const fallback = document.getElementById('fallback')
+        if (root && (!root.innerHTML || root.innerHTML.trim()==='')){
+          console.warn('React root appears empty. Check DevTools Console and Network for errors.');
+          if (fallback) {
+            fallback.innerHTML = `<div class="text-center text-gray-400"><div class="text-2xl font-semibold">StockView</div><div class="mt-2">React failed to mount.</div><div class="mt-3 text-sm">Open DevTools → Console and paste any errors here so I can help debug.</div></div>`
+          }
+        }
+      }, 2000)
+    </script>
+    <script>
+      // Capture global errors and unhandled promise rejections and show them in the fallback UI
+      function showError(msg){
+        try{
+          const fallback = document.getElementById('fallback')
+          if (fallback) {
+            fallback.innerHTML = `<div class="text-center text-red-300"><div class="text-xl font-semibold">Error mounting app</div><pre class="mt-2 text-sm text-left max-w-xl mx-auto break-words">${String(msg)}</pre><div class=\"mt-3 text-sm\">Copy this and paste here so I can debug.</div></div>`
+          } else {
+            console.error(msg)
+          }
+        }catch(e){ console.error(e) }
+      }
+
+      window.addEventListener('error', function (e) {
+        showError(e.message + '\n' + (e.error && e.error.stack ? e.error.stack : ''))
+      })
+
+      window.addEventListener('unhandledrejection', function (e) {
+        showError('Unhandled Rejection: ' + (e.reason && e.reason.stack ? e.reason.stack : JSON.stringify(e.reason)))
+      })
+    </script>
+  </body>
+</html>
