@@ -9,13 +9,39 @@ export default function TrendingPennyScanner({ refreshInterval = 5000 }) {
   const [hoveredStock, setHoveredStock] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [error, setError] = useState(null)
+  const [stale, setStale] = useState(false)
 
   async function scanStocks() {
     try {
       setLoading(true)
       setError(null)
       const stocks = await scanTrendingPennyStocks()
-      setTrendingStocks(stocks)
+      if (Array.isArray(stocks) && stocks.length > 0) {
+        setTrendingStocks(stocks)
+        setStale(false)
+        try { localStorage.setItem('pennyScanner:lastGood', JSON.stringify({ t: Date.now(), items: stocks })) } catch {}
+      } else {
+        // Use last-good cache if available
+        try {
+          const raw = localStorage.getItem('pennyScanner:lastGood')
+          if (raw) {
+            const cache = JSON.parse(raw)
+            if (Array.isArray(cache.items) && cache.items.length > 0) {
+              setTrendingStocks(cache.items)
+              setStale(true)
+            } else {
+              setTrendingStocks([])
+              setStale(false)
+            }
+          } else {
+            setTrendingStocks([])
+            setStale(false)
+          }
+        } catch {
+          setTrendingStocks([])
+          setStale(false)
+        }
+      }
       setLastUpdate(new Date())
     } catch (error) {
       console.error('Failed to scan real sentiment data:', error)
@@ -63,6 +89,7 @@ export default function TrendingPennyScanner({ refreshInterval = 5000 }) {
         </h3>
         <div className="flex items-center gap-2 text-xs text-gray-400">
           {lastUpdate && <span>Updated {formatTime(lastUpdate.getTime())}</span>}
+          {stale && <span className="text-amber-400">Showing last good results</span>}
           <button 
             onClick={scanStocks}
             disabled={loading}
@@ -72,6 +99,13 @@ export default function TrendingPennyScanner({ refreshInterval = 5000 }) {
           </button>
         </div>
       </div>
+
+      {/* Info banners */}
+      {trendingStocks.some(s => s.fallback === 'price') && (
+        <div className="mb-3 text-xs text-gray-300 bg-gray-900/40 border border-gray-700 rounded p-2">
+          Using price-based early movers because no recent social sentiment was found for the current rotation.
+        </div>
+      )}
 
       <div className="space-y-3 max-h-96 overflow-y-auto">
         <AnimatePresence>
@@ -100,6 +134,9 @@ export default function TrendingPennyScanner({ refreshInterval = 5000 }) {
                       {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(1)}%
                     </span>
                     <span className="text-gray-300">{stock.mentions} mentions</span>
+                    {stock.fallback === 'price' && (
+                      <span className="text-[10px] text-gray-400 bg-gray-700/60 px-1 py-0.5 rounded">price-based</span>
+                    )}
                   </div>
 
                   {/* Hype Score Bar */}
@@ -120,7 +157,7 @@ export default function TrendingPennyScanner({ refreshInterval = 5000 }) {
                 {/* Mini mention trend chart */}
                 <div className="w-24 h-12 ml-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={stock.mentionHistory}>
+                    <LineChart data={stock.mentionHistory || []}>
                       <Line 
                         type="monotone" 
                         dataKey="mentions" 
@@ -196,8 +233,8 @@ export default function TrendingPennyScanner({ refreshInterval = 5000 }) {
       {trendingStocks.length === 0 && !loading && !error && (
         <div className="text-center text-gray-400 py-8">
           <div className="text-2xl mb-2">🔍</div>
-          <div>No real sentiment data available</div>
-          <div className="text-xs mt-1">Waiting for social media mentions...</div>
+          <div>No real sentiment data available right now</div>
+          <div className="text-xs mt-1">We rotate ticker sets every 2 minutes. Try Scan again shortly.</div>
         </div>
       )}
     </div>
