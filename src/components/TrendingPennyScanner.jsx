@@ -134,8 +134,10 @@ export default function TrendingPennyScanner({ refreshInterval = 5000 }) {
                       {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(1)}%
                     </span>
                     <span className="text-gray-300">{stock.mentions} mentions</span>
-                    {stock.fallback === 'price' && (
-                      <span className="text-[10px] text-gray-400 bg-gray-700/60 px-1 py-0.5 rounded">price-based</span>
+                    {stock.fallback && (
+                      <span className="text-[10px] text-gray-400 bg-gray-700/60 px-1 py-0.5 rounded">
+                        {stock.fallback === 'price5' ? 'sub-$5 price' : stock.fallback === 'price10' ? 'sub-$10 price' : 'price-based'}
+                      </span>
                     )}
                   </div>
 
