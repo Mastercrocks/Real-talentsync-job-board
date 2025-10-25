@@ -152,8 +152,17 @@ export async function scanTrendingPennyStocks() {
         try {
           const batchQuotes = await fetchQuotes(batch)
           const movers = Object.entries(batchQuotes)
-            .map(([ticker, q]) => ({ ticker, ...q }))
-            .filter(q => q && typeof q.price === 'number' && q.price > 0 && q.price < 5 && typeof q.changePercent === 'number')
+            .map(([ticker, q]) => {
+              if (!q || typeof q.price !== 'number' || q.price <= 0) return null
+              // Normalize percent if missing
+              let cp = q && typeof q.changePercent === 'number' ? q.changePercent : null
+              if (cp === null && typeof q.change === 'number') {
+                const prev = q.price - q.change
+                if (prev > 0) cp = (q.change / prev) * 100
+              }
+              return cp === null ? null : { ticker, ...q, changePercent: cp }
+            })
+            .filter(q => q && q.price < 5)
             .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
           for (const m of movers) {
             if (collected.find(x => x.ticker === m.ticker)) continue
@@ -186,8 +195,16 @@ export async function scanTrendingPennyStocks() {
           try {
             const batchQuotes = await fetchQuotes(batch)
             const movers = Object.entries(batchQuotes)
-              .map(([ticker, q]) => ({ ticker, ...q }))
-              .filter(q => q && typeof q.price === 'number' && q.price > 0 && q.price < 10 && typeof q.changePercent === 'number')
+              .map(([ticker, q]) => {
+                if (!q || typeof q.price !== 'number' || q.price <= 0) return null
+                let cp = q && typeof q.changePercent === 'number' ? q.changePercent : null
+                if (cp === null && typeof q.change === 'number') {
+                  const prev = q.price - q.change
+                  if (prev > 0) cp = (q.change / prev) * 100
+                }
+                return cp === null ? null : { ticker, ...q, changePercent: cp }
+              })
+              .filter(q => q && q.price < 10)
               .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
             for (const m of movers) {
               if (collected.find(x => x.ticker === m.ticker)) continue
@@ -205,6 +222,47 @@ export async function scanTrendingPennyStocks() {
                 changePercent: m.changePercent,
                 lastUpdated: Date.now(),
                 fallback: 'price10'
+              })
+              if (collected.length >= 10) break
+            }
+          } catch (_) {}
+        }
+      }
+
+      // Final tier: sub-$20 if still empty (keeps results real but not strict penny)
+      if (collected.length === 0) {
+        for (let i = 0; i < 2 && collected.length < 10; i++) {
+          const batch = rotatedBatch(PENNY_TICKERS, SCAN_BATCH_SIZE, i + 2)
+          try {
+            const batchQuotes = await fetchQuotes(batch)
+            const movers = Object.entries(batchQuotes)
+              .map(([ticker, q]) => {
+                if (!q || typeof q.price !== 'number' || q.price <= 0) return null
+                let cp = q && typeof q.changePercent === 'number' ? q.changePercent : null
+                if (cp === null && typeof q.change === 'number') {
+                  const prev = q.price - q.change
+                  if (prev > 0) cp = (q.change / prev) * 100
+                }
+                return cp === null ? null : { ticker, ...q, changePercent: cp }
+              })
+              .filter(q => q && q.price < 20)
+              .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
+            for (const m of movers) {
+              if (collected.find(x => x.ticker === m.ticker)) continue
+              collected.push({
+                ticker: m.ticker,
+                mentions: 0,
+                sentiment: { positive: 0, neutral: 0, negative: 0, score: 0 },
+                volumeChange: 0,
+                hypeScore: Math.round(Math.abs(m.changePercent) * 10),
+                trending: Math.abs(m.changePercent) >= 2,
+                sources: { reddit: 0, twitter: 0, stocktwits: 0 },
+                mentionHistory: [],
+                price: m.price,
+                change: m.change,
+                changePercent: m.changePercent,
+                lastUpdated: Date.now(),
+                fallback: 'price20'
               })
               if (collected.length >= 10) break
             }
