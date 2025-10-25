@@ -47,6 +47,12 @@ export default function Navbar ({ live = false, onSearch = () => {}, onSubmit = 
             {live && (
               <span className="text-xs px-2 py-0.5 bg-emerald-400 text-black rounded-md">LIVE</span>
             )}
+            {/* Dev-only API key status indicator */}
+            {import.meta && import.meta.env && import.meta.env.DEV && (
+              import.meta.env.VITE_FINNHUB_KEY
+                ? <span className="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">API key OK</span>
+                : <span className="text-[10px] px-2 py-0.5 bg-red-500/20 text-red-400 rounded-md border border-red-500/30">API key missing</span>
+            )}
           </div>
         </div>
 

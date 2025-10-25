@@ -15,6 +15,19 @@ if (!TOKEN && typeof process !== 'undefined' && process.env && process.env.VITE_
   TOKEN = process.env.VITE_FINNHUB_KEY
 }
 
+// Developer-friendly console warning if token is missing
+if (!TOKEN) {
+  try {
+    const dev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV
+    if (dev) {
+      // eslint-disable-next-line no-console
+      console.warn('[StockView] Finnhub API key not found. Set VITE_FINNHUB_KEY in your .env and restart the dev server.')
+    }
+  } catch (_) {
+    // ignore
+  }
+}
+
 async function fetchQuote(ticker) {
   if (!TOKEN) throw new Error('No Finnhub API key')
   const url = `${FINNHUB_BASE}/quote?symbol=${encodeURIComponent(ticker)}&token=${TOKEN}`
