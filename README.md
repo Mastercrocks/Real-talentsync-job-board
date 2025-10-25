@@ -14,7 +14,7 @@ Key files & where to find them
 APIs
 - `src/api/fetchFinnhub.js` — Finnhub client (quotes, candles, search, market news, social sentiment)
 - `src/api/newsAggregator.js` — Aggregates Finnhub general + company news, adds simple sentiment labels
-- `src/api/sentimentScanner.js` — Real early penny stock sentiment scanner (7‑day aggregation)
+- `src/api/sentimentScanner.js` — Real early penny stock scanner (14‑day aggregation) with price-based fallbacks
 
 Run locally (requires Finnhub API key)
 ```powershell
@@ -56,4 +56,4 @@ Node service (optional):
 Notes
 - Vite embeds env vars at build time. Set `VITE_FINNHUB_KEY` before triggering a build on Railway.
 - The News widget uses exponential backoff on 429 responses and shows last-good results when available.
-- The Early Penny Stock Movers may be empty if Finnhub has limited social data for the current tickers; it refreshes every 2 minutes.
+- The Early Penny Stock Movers first uses real social sentiment (14 days, rotating ticker batches). If that yields nothing, it falls back to real price movers under $5, then <$10, and finally <$20 — all strictly real data, never synthetic. The card refreshes every ~2 minutes.
