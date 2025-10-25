@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import TopGainers from '../components/TopGainers'
 import TrendingPennyScanner from '../components/TrendingPennyScanner'
 import RealTimeStockNews from '../components/RealTimeStockNews'
+import DataStatus from '../components/DataStatus'
 import Modal from '../components/Modal'
 import Chart from '../components/Chart'
 import { motion } from 'framer-motion'
@@ -76,6 +77,10 @@ export default function Dashboard (props) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-gray-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Debug panel toggle via ?debug=1 */}
+        {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1' && (
+          <DataStatus />
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.section initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:0.4}} className="lg:col-span-2">
             {/* Top Gainers/Losers Section */}
